@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.plans import router as plans_router
 from app.api.upload import router as upload_router
 
 app = FastAPI(title="FREITIR API")
@@ -25,3 +26,4 @@ def health():
 
 
 app.include_router(upload_router)
+app.include_router(plans_router)

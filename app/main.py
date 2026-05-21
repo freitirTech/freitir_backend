@@ -6,6 +6,7 @@ from app.api.carriers import router as carriers_router
 from app.api.execution import router as execution_router
 from app.api.intelligence import router as intelligence_router
 from app.api.plans import router as plans_router
+from app.api.simulator import router as simulator_router
 from app.api.upload import router as upload_router
 
 app = FastAPI(title="FREITIR API")
@@ -35,3 +36,4 @@ app.include_router(execution_router)
 app.include_router(carriers_router)
 app.include_router(analytics_router)
 app.include_router(intelligence_router)
+app.include_router(simulator_router)

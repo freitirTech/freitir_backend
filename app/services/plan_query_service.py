@@ -4,7 +4,7 @@ from app.core.supabase_client import get_supabase
 def list_plans(carrier_id: str) -> list[dict]:
     db = get_supabase()
 
-    plans = db.table("plans").select("id, filename, uploaded_at").eq("carrier_id", carrier_id).order("uploaded_at", desc=True).execute()
+    plans = db.table("plans").select("id, filename, uploaded_at, plan_date").eq("carrier_id", carrier_id).order("uploaded_at", desc=True).execute()
 
     tour_counts = db.table("tours").select("id, plan_id").eq("carrier_id", carrier_id).execute()
     execution_stop_ids = {e["stop_id"] for e in db.table("execution_events").select("stop_id").eq("carrier_id", carrier_id).execute().data}
@@ -29,6 +29,7 @@ def list_plans(carrier_id: str) -> list[dict]:
             "id": p["id"],
             "filename": p["filename"],
             "uploaded_at": p["uploaded_at"],
+            "plan_date": p.get("plan_date"),
             "tour_count": counts_by_plan.get(p["id"], 0),
             "has_execution": p["id"] in plans_with_execution,
         }

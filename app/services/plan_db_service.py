@@ -2,16 +2,20 @@ from app.core.supabase_client import get_supabase
 from app.schemas.plan import Plan
 
 
-def save_plan(plan: Plan, carrier_id: str) -> str:
+def save_plan(plan: Plan, carrier_id: str, plan_date: str | None = None) -> str:
     """
     Persists a canonical Plan (tours → stops → legs) to Supabase.
     Returns the DB-assigned plan UUID.
     """
     db = get_supabase()
 
+    plan_payload: dict = {"carrier_id": carrier_id, "filename": plan.filename}
+    if plan_date:
+        plan_payload["plan_date"] = plan_date
+
     plan_row = (
         db.table("plans")
-        .insert({"carrier_id": carrier_id, "filename": plan.filename})
+        .insert(plan_payload)
         .execute()
     )
     db_plan_id: str = plan_row.data[0]["id"]

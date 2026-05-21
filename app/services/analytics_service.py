@@ -48,6 +48,81 @@ def get_summary(carrier_id: str) -> dict:
     }
 
 
+def get_weekly_trends(carrier_id: str) -> list[dict]:
+    """
+    Return week-by-week performance grouped by plan_date.
+    Only includes plans that have a plan_date set and have execution data.
+    """
+    db = get_supabase()
+
+    # Plans with dates, oldest first
+    plans = (
+        db.table("plans")
+        .select("id, plan_date, filename")
+        .eq("carrier_id", carrier_id)
+        .not_.is_("plan_date", "null")
+        .order("plan_date")
+        .execute()
+    ).data
+
+    if not plans:
+        return []
+
+    plan_ids = [p["id"] for p in plans]
+    plan_by_id = {p["id"]: p for p in plans}
+
+    # Tours for those plans
+    tours = (
+        db.table("tours")
+        .select("id, plan_id")
+        .in_("plan_id", plan_ids)
+        .execute()
+    ).data
+
+    tour_to_plan: dict[str, str] = {t["id"]: t["plan_id"] for t in tours}
+    tour_ids = list(tour_to_plan.keys())
+
+    if not tour_ids:
+        return []
+
+    # Tour gaps (already aggregated per tour)
+    tour_gaps = (
+        db.table("tour_gaps")
+        .select("tour_id, total_delay_minutes, failed_stops, total_stops")
+        .in_("tour_id", tour_ids)
+        .execute()
+    ).data
+
+    # Group by plan_date
+    from collections import defaultdict
+    by_date: dict[str, dict] = defaultdict(
+        lambda: {"total_delay_minutes": 0, "failed_stops": 0, "total_stops": 0, "tours_run": 0}
+    )
+
+    for tg in tour_gaps:
+        plan_id = tour_to_plan.get(tg["tour_id"])
+        if not plan_id:
+            continue
+        plan_date = plan_by_id[plan_id]["plan_date"]
+        d = by_date[plan_date]
+        d["total_delay_minutes"] += tg["total_delay_minutes"]
+        d["failed_stops"] += tg["failed_stops"]
+        d["total_stops"] += tg["total_stops"]
+        d["tours_run"] += 1
+
+    return [
+        {
+            "plan_date": date,
+            "tours_run": data["tours_run"],
+            "total_delay_minutes": data["total_delay_minutes"],
+            "failed_stops": data["failed_stops"],
+            "total_stops": data["total_stops"],
+            "revenue_lost_eur": revenue_lost_eur(data["total_delay_minutes"]),
+        }
+        for date, data in sorted(by_date.items())
+    ]
+
+
 def get_patterns(carrier_id: str) -> list[dict]:
     db = get_supabase()
     return (

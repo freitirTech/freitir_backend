@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from typing import Optional
 
 from app.core.auth import get_carrier_id
 from app.services.canonical_parser_service import parse_to_canonical_plan
@@ -25,15 +26,21 @@ def get_gaps(plan_id: str, carrier_id: str = Depends(get_carrier_id)):
 @router.post("/canonical")
 async def create_canonical_plan(
     file: UploadFile = File(...),
+    plan_date: Optional[str] = Form(None),
     carrier_id: str = Depends(get_carrier_id),
 ):
+    """
+    Upload a transport plan CSV/Excel file.
+    plan_date (optional, YYYY-MM-DD): the date the tours actually run.
+    Defaults to today if omitted.
+    """
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided.")
 
     try:
         file_bytes = await file.read()
         plan = parse_to_canonical_plan(file.filename, file_bytes)
-        db_plan_id = save_plan(plan, carrier_id=carrier_id)
+        db_plan_id = save_plan(plan, carrier_id=carrier_id, plan_date=plan_date)
         score_plan(plan_id=db_plan_id, carrier_id=carrier_id)
         return {**plan.model_dump(), "db_plan_id": db_plan_id}
     except ValueError as exc:

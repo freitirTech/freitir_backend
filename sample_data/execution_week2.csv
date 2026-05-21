@@ -1,0 +1,10 @@
+tour_id,stop_sequence,actual_arrival,actual_departure,status,failure_reason
+T001,1,2026-04-14 07:03,2026-04-14 07:33,completed,
+T001,2,2026-04-14 09:37,2026-04-14 10:25,completed,
+T001,3,2026-04-14 12:25,2026-04-14 12:55,completed,
+T002,1,2026-04-14 07:45,,failed,access denied
+T002,2,2026-04-14 10:40,2026-04-14 11:25,completed,
+T002,3,2026-04-14 13:08,2026-04-14 13:38,completed,
+T003,1,2026-04-14 08:42,2026-04-14 09:28,completed,
+T003,2,2026-04-14 11:35,2026-04-14 12:05,completed,
+T003,3,2026-04-14 14:10,2026-04-14 14:50,completed,
